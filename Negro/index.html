@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>♥ Will you be my Valentine? ♥</title>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #ffe6f0 0%, #ffd9e8 100%);
+            font-family: 'Patrick Hand', cursive;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        /* Black overlay */
+        .black-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s;
+            z-index: 9998;
+        }
+
+        /* Video container (NO) */
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s;
+        }
+        .video-container.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Split GIF container (YES) */
+        .split-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a0b0f;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .split-container.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .gif-row {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            max-width: 1200px;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .gif-card {
+            flex: 0 1 auto;
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 60px 20px 60px 20px;
+            padding: 15px;
+            border: 4px solid white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .gif-card img {
+            width: 100%;
+            height: auto;
+            max-height: 30vh;
+            object-fit: contain;
+            border-radius: 40px 10px 40px 10px;
+            border: 6px solid #ffeef2;
+        }
+
+        .gif-text {
+            font-size: 1.5rem;
+            background: #ffecf0;
+            color: #b33b5c;
+            padding: 10px 15px;
+            border-radius: 50px;
+            margin-top: 10px;
+            text-align: center;
+            border: 3px solid white;
+            box-shadow: 0 8px 0 #b34b67;
+        }
+
+        .heart-divider {
+            font-size: 3rem;
+            color: #ffb3c6;
+            text-shadow: 0 0 20px hotpink;
+        }
+
+        .split-footer {
+            font-size: 1.5rem;
+            color: white;
+            background: rgba(255, 180, 200, 0.3);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 3px solid white;
+            margin-top: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* White blast */
+        .white-blast {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 20000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Main card */
+        .card {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 60px 20px 60px 20px;
+            box-shadow: 0 25px 40px rgba(200, 70, 100, 0.4);
+            padding: 30px 20px;
+            text-align: center;
+            border: 6px solid white;
+            position: relative;
+            z-index: 10;
+            transition: opacity 0.8s;
+            margin: 10px;
+        }
+        .card.fade-out {
+            opacity: 0;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #b33b5c;
+            text-shadow: 3px 3px 0 #ffe6ec;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        @media (min-width: 500px) {
+            h1 { font-size: 2.8rem; }
+        }
+
+        @media (min-width: 700px) {
+            h1 { font-size: 3.5rem; }
+            .gif-row {
+                flex-direction: row;
+            }
+            .gif-card {
+                max-width: 500px;
+            }
+            .split-footer {
+                font-size: 2rem;
+            }
+        }
+
+        .sub {
+            font-size: 1.3rem;
+            color: #bf4c6a;
+            background: #ffecf0;
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 70px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 -3px 0 #ffb8c9;
+            line-height: 1.3;
+        }
+
+        @media (min-width: 500px) {
+            .sub { font-size: 1.6rem; }
+        }
+
+        .button-area {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            border: 3px dashed #ffb3c6;
+            border-radius: 50px;
+            margin: 15px 0;
+            touch-action: none;
+        }
+
+        @media (min-width: 500px) {
+            .button-area { height: 220px; }
+        }
+
+        @media (min-width: 700px) {
+            .button-area { height: 250px; }
+        }
+
+        .btn {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.8rem;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 130px;
+            background: white;
+            color: #8a1e3a;
+            font-weight: bold;
+            box-shadow: 0 8px 0 #8a1e3a;
+            border: 4px solid #ffc1cc;
+            cursor: pointer;
+            position: absolute;
+            transition: all 0.3s;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+            min-width: 100px;
+        }
+
+        @media (min-width: 500px) {
+            .btn { 
+                font-size: 2rem;
+                padding: 15px 40px;
+            }
+        }
+
+        @media (min-width: 700px) {
+            .btn { font-size: 2.5rem; }
+        }
+
+        #yesBtn {
+            background: #ffb3c6;
+            color: #7a1a36;
+            box-shadow: 0 8px 0 #7a1a36;
+            border: 4px solid #ff98ae;
+            left: 15px;
+            top: 15px;
+            z-index: 20;
+        }
+
+        #noBtn {
+            background: #fdafaf;
+            color: #5c0e0e;
+            box-shadow: 0 8px 0 #5c0e0e;
+            border: 4px solid #ff8181;
+            right: 15px;
+            top: 15px;
+            z-index: 30;
+        }
+
+        .counter-box {
+            font-size: 1.4rem;
+            color: #a1374f;
+            background: #ffeef2;
+            padding: 12px 15px;
+            border-radius: 80px;
+            display: inline-block;
+            border: 4px dashed #ff8da1;
+            margin-top: 15px;
+            max-width: 100%;
+        }
+
+        @media (min-width: 500px) {
+            .counter-box { font-size: 1.8rem; }
+        }
+
+        .counter-num {
+            background: #fd7e9c;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 50px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        .hint {
+            margin-left: 8px;
+            color: #b34560;
+            display: inline-block;
+            font-size: 1.2rem;
+        }
+
+        .foot-msg {
+            margin-top: 15px;
+            font-size: 1.4rem;
+            color: #9e3d55;
+            min-height: 3rem;
+            word-break: break-word;
+        }
+
+        @media (min-width: 500px) {
+            .foot-msg { font-size: 1.8rem; }
+        }
+
+        /* Effects */
+        .sparkle, .spooky {
+            position: absolute;
+            pointer-events: none;
+            font-size: 1.5rem;
+            animation: float 1s ease-out forwards;
+            z-index: 100;
+        }
+        @keyframes float {
+            0% { opacity: 1; transform: scale(0.5) translateY(0); }
+            100% { opacity: 0; transform: scale(1.5) translateY(-50px); }
+        }
+
+        .shake {
+            animation: shake 0.3s;
+        }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .heartbeat {
+            animation: heartbeat 0.4s;
+        }
+        @keyframes heartbeat {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .yes-stretched {
+            width: calc(100% - 40px) !important;
+            left: 20px !important;
+            right: auto !important;
+            z-index: 50 !important;
+            font-size: 1.6rem !important;
+            padding: 12px 15px !important;
+        }
+
+        @media (min-width: 500px) {
+            .yes-stretched {
+                width: calc(100% - 60px) !important;
+                left: 30px !important;
+                font-size: 2rem !important;
+            }
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlays -->
+    <div class="black-overlay" id="blackOverlay"></div>
+    <div class="white-blast" id="whiteBlast"></div>
+    
+    <!-- NO container (video) -->
+    <div class="video-container" id="videoContainer">
+        <video id="noVideo" playsinline></video>
+    </div>
+
+    <!-- YES container (split GIF) -->
+    <div class="split-container" id="splitContainer">
+        <div class="gif-row">
+            <div class="gif-card">
+                <img id="leftGif" src="" alt="left">
+                <div class="gif-text" id="leftText">💖 with you</div>
+            </div>
+            <div class="heart-divider">❤️</div>
+            <div class="gif-card">
+                <img id="rightGif" src="" alt="right">
+                <div class="gif-text" id="rightText">💔 without you</div>
+            </div>
+        </div>
+        <div class="split-footer" id="splitFooter">💞 you said YES! 💞</div>
+    </div>
+
+    <!-- Main card -->
+    <div class="card" id="mainCard">
+        <h1>💌 Will you be my Valentine? 💌</h1>
+        <div class="sub">🍓 Options below carries the burden of this plain. Consequence is severe. Choose wisely 🍓</div>
+
+        <div class="button-area" id="btnArea">
+            <button class="btn" id="yesBtn">💖 YES</button>
+            <button class="btn" id="noBtn">💔 no</button>
+        </div>
+
+        <div class="counter-box">
+            🏃 escapes left: 
+            <span class="counter-num" id="escapeCount">10</span>
+            <span class="hint" id="hintMsg">hover or click no!</span>
+        </div>
+        <div id="funnyMsg" class="foot-msg"></div>
+    </div>
+
+    <script>
+        // ========== CONFIG - CHANGE THESE TO YOUR FILES ==========
+        const NO_VIDEO = "Flashbang.mp4";              // Video for NO
+        const LEFT_GIF = "earth-its-safe.gif";   // Left GIF for YES
+        const RIGHT_GIF = "earth-globe-destroyed.gif";  // Right GIF for YES
+        
+        // Custom texts
+        const LEFT_TEXT = " Earth because u said yes";
+        const RIGHT_TEXT = " Earth if u say no";
+        const FOOTER_TEXT = "✨ great choice muhahaha ✨";
+        
+        // Messages (original)
+        const HOVER_MSGS = ["🖕🏿 nice try nigga!", "🖕🏿 try again!", "😐 don't do that!", "🙄 HEY! so mean", "😥 please have mercy", "😏 press no if stinky", "😠 hey, stop pressing?", "😭 please don't, I'll do the laundry", "🌏 But this has a brutal consequence lah", "💥 FOOL YOU'VE DOOMED US ALL"];
+        const YES_HOVER = ["🥰 MWEHEHEHE", "C'mon press it😏", " best decision", "✨ you won't regret", " PLEASE HWAAHHH😭", "💖 press YES if smells gud", "💞 we're meant to hate", "🌸 my heart says nigga idk", "💗 be my valentine, then sleep", "✨ let's make it fun at least"];
+        const CLICK_MSGS = ["🖕🏿 nice try nigga!", "🖕🏿 try harder!", "😐 don't do that!", "🙄 HEY! so rude", "😥 please be kind", "😏 press no if smelly", "😠 hey, stop tapping?", "😭 please don't, I'll do the dishes", "🌏 But this has a intense consequence lah", "💥 FOOL YOU'VE DOOMED US ALL"];
+        
+        // ========== STATE ==========
+        let escapes = 10;
+        let phase1 = true;          // first phase (no button moves)
+        let phase2 = false;         // after first YES click
+        let mediaActive = false;     // video/gif showing
+        
+        // DOM elements
+        const card = document.getElementById('mainCard');
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const escapeSpan = document.getElementById('escapeCount');
+        const hint = document.getElementById('hintMsg');
+        const funny = document.getElementById('funnyMsg');
+        const black = document.getElementById('blackOverlay');
+        const white = document.getElementById('whiteBlast');
+        
+        // Video
+        const videoContainer = document.getElementById('videoContainer');
+        const noVideo = document.getElementById('noVideo');
+        
+        // Split GIF
+        const splitContainer = document.getElementById('splitContainer');
+        const leftGif = document.getElementById('leftGif');
+        const rightGif = document.getElementById('rightGif');
+        const leftText = document.getElementById('leftText');
+        const rightText = document.getElementById('rightText');
+        const splitFooter = document.getElementById('splitFooter');
+        
+        // Message indices
+        let hoverIdx = 0, yesIdx = 0, clickIdx = 0;
+        let lastMove = 0;
+        
+        // Helper functions
+        function updateDisplay() {
+            escapeSpan.innerText = escapes;
+            if(escapes === 0 && phase1) {
+                hint.innerText = "😵 0 escapes — u can change your mind though 😏";
+                noBtn.style.boxShadow = '0 0 0 6px #ffb3c6';
+            }
+        }
+        
+        function getMsg(arr, idx) {
+            return arr[idx % arr.length];
+        }
+        
+        // Effects
+        function addEffect(type, btn) {
+            const rect = btn.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+            for(let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const el = document.createElement('div');
+                    el.className = type;
+                    el.textContent = type === 'sparkle' ? 
+                        ['✨','💖','🌸','🌟','💕'][Math.floor(Math.random()*5)] :
+                        ['💀','👻','🌫️','☠️','🕷️'][Math.floor(Math.random()*5)];
+                    el.style.left = (rect.left - cardRect.left + Math.random()*rect.width) + 'px';
+                    el.style.top = (rect.top - cardRect.top + Math.random()*rect.height) + 'px';
+                    card.appendChild(el);
+                    setTimeout(() => el.remove(), 900);
+                }, i * 60);
+            }
+        }
+        
+        // ========== SHOW SPLIT GIF (YES) ==========
+        function showYesGifs() {
+            if(mediaActive) return;
+            mediaActive = true;
+            
+            // Set content
+            leftGif.src = LEFT_GIF;
+            rightGif.src = RIGHT_GIF;
+            leftText.innerText = LEFT_TEXT;
+            rightText.innerText = RIGHT_TEXT;
+            splitFooter.innerText = FOOTER_TEXT;
+            
+            // Disable buttons
+            yesBtn.disabled = true;
+            noBtn.disabled = true;
+            
+            // Update messages
+            funny.innerText = "🎉 YAY! MUHAHAHHA EZ🎉";
+            hint.innerText = "💕 PERFECT! 💕";
+            
+            // Fade card
+            card.classList.add('fade-out');
+            
+            // Show black
+            setTimeout(() => black.style.opacity = '1', 50);
+            
+            // Show split container
+            setTimeout(() => {
+                black.style.opacity = '0';
+                splitContainer.classList.add('active');
+            }, 800);
+        }
+        
+        // ========== SHOW VIDEO (NO) ==========
+        function showNoVideo() {
+            if(mediaActive) return;
+            mediaActive = true;
+            
+            // Set video
+            noVideo.src = NO_VIDEO;
+            noVideo.load();
+            noVideo.play().catch(e => console.log('Video play failed:', e));
+            
+            // Try audio
+            try { new Audio('fahhh_html.mp3').play(); } catch(e) {}
+            
+            // Disable buttons
+            yesBtn.disabled = true;
+            noBtn.disabled = true;
+            
+            // Update messages
+            funny.innerText = "😆 gg wp 😆";
+            hint.innerText = "meow ";
+            
+            // Fade card
+            card.classList.add('fade-out');
+            
+            // Show black
+            setTimeout(() => black.style.opacity = '1', 50);
+            
+            // Show video
+            setTimeout(() => {
+                black.style.opacity = '0';
+                videoContainer.classList.add('active');
+                
+                // White blast after 1.5 sec
+                setTimeout(() => {
+                    white.style.opacity = '1';
+                }, 1820);
+            }, 800);
+        }
+        
+        // ========== MOVE NO BUTTON ==========
+        function moveNoButton(isClick = false) {
+            if(!phase1 || mediaActive || escapes <= 0) return false;
+            
+            const now = Date.now();
+            if(now - lastMove < 200) {
+                hint.innerText = ` ${getMsg(HOVER_MSGS, hoverIdx++)}`;
+                return false;
+            }
+            lastMove = now;
+            
+            const area = document.getElementById('btnArea').getBoundingClientRect();
+            const btn = noBtn.getBoundingClientRect();
+            const pad = 10;
+            
+            const maxLeft = Math.max(0, area.width - btn.width - pad);
+            const maxTop = Math.max(0, area.height - btn.height - pad);
+            
+            if(maxLeft < pad || maxTop < pad) return false;
+            
+            const newLeft = Math.floor(Math.random() * maxLeft) + pad;
+            const newTop = Math.floor(Math.random() * maxTop) + pad;
+            
+            noBtn.style.left = newLeft + 'px';
+            noBtn.style.top = newTop + 'px';
+            noBtn.style.right = 'auto';
+            
+            escapes--;
+            escapeSpan.innerText = escapes;
+            hint.innerText = ` ${getMsg(isClick ? CLICK_MSGS : HOVER_MSGS, isClick ? clickIdx++ : hoverIdx++)}`;
+            addEffect('spooky', noBtn);
+            noBtn.classList.add('shake');
+            setTimeout(() => noBtn.classList.remove('shake'), 300);
+            updateDisplay();
+            
+            return true;
+        }
+        
+        // ========== PHASE 2 ==========
+        function onPhase2NoClick() {
+            if(!phase2 || mediaActive) return;
+            
+            yesBtn.classList.add('yes-stretched');
+            yesBtn.innerText = "😏 No don't think";
+            noBtn.style.zIndex = '5';
+            yesBtn.style.zIndex = '50';
+            noBtn.disabled = true;
+            hint.innerText = "😏 Nah don't even try";
+        }
+        
+        // ========== YES CLICK ==========
+        yesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(mediaActive) return;
+            
+            if(phase1) {
+                // First YES click
+                phase1 = false;
+                phase2 = true;
+                
+                // Remove phase1 listeners
+                noBtn.removeEventListener('mouseenter', onNoHover);
+                noBtn.removeEventListener('click', onNoClick);
+                noBtn.removeEventListener('touchstart', onNoTouch);
+                yesBtn.removeEventListener('mouseenter', onYesHover);
+                
+                // Reset NO position
+                noBtn.style.left = 'auto';
+                noBtn.style.right = '15px';
+                noBtn.style.top = '15px';
+                
+                // Change NO text
+                noBtn.innerText = "🤔 let me think";
+                noBtn.disabled = false;
+                
+                // Add phase2 listener
+                noBtn.addEventListener('click', onPhase2NoClick);
+                noBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    onPhase2NoClick();
+                });
+                
+                // Update display
+                hint.innerText = "🤔 Wanna reconsider?";
+                escapes = 0;
+                escapeSpan.innerText = '0';
+                
+                addEffect('sparkle', yesBtn);
+                
+            } else if(phase2) {
+                // Second YES click
+                if(yesBtn.classList.contains('yes-stretched')) {
+                    showYesGifs();
+                } else {
+                    hint.innerText = "First click 'let me think'!";
+                }
+            }
+        });
+        
+        // ========== NO HOVER/TOUCH ==========
+        function onNoHover(e) {
+            e.preventDefault();
+            moveNoButton(false);
+        }
+        
+        function onNoTouch(e) {
+            e.preventDefault();
+            moveNoButton(true);
+        }
+        
+        // ========== NO CLICK ==========
+        function onNoClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if(!phase1 || mediaActive) return;
+            
+            if(escapes > 0) {
+                const now = Date.now();
+                if(now - lastMove < 180) {
+                    hint.innerText = `👆 ${getMsg(CLICK_MSGS, clickIdx++)}`;
+                    return;
+                }
+                lastMove = now;
+                
+                const area = document.getElementById('btnArea').getBoundingClientRect();
+                const btn = noBtn.getBoundingClientRect();
+                const pad = 10;
+                
+                const maxLeft = Math.max(0, area.width - btn.width - pad);
+                const maxTop = Math.max(0, area.height - btn.height - pad);
+                
+                if(maxLeft > pad && maxTop > pad) {
+                    const newLeft = Math.floor(Math.random() * maxLeft) + pad;
+                    const newTop = Math.floor(Math.random() * maxTop) + pad;
+                    
+                    noBtn.style.left = newLeft + 'px';
+                    noBtn.style.top = newTop + 'px';
+                    noBtn.style.right = 'auto';
+                    
+                    escapes--;
+                    escapeSpan.innerText = escapes;
+                }
+                
+                hint.innerText = `👆 ${getMsg(CLICK_MSGS, clickIdx++)}`;
+                addEffect('spooky', noBtn);
+                noBtn.classList.add('shake');
+                setTimeout(() => noBtn.classList.remove('shake'), 300);
+                updateDisplay();
+            }
+            
+            if(escapes === 0 && phase1 && !mediaActive) {
+                showNoVideo();
+            }
+        }
+        
+        // ========== YES HOVER/TOUCH ==========
+        function onYesHover(e) {
+            e.preventDefault();
+            if(!phase1 || mediaActive) return;
+            
+            hint.innerText = `💖 ${getMsg(YES_HOVER, yesIdx++)}`;
+            addEffect('sparkle', yesBtn);
+            yesBtn.classList.add('heartbeat');
+            setTimeout(() => yesBtn.classList.remove('heartbeat'), 400);
+        }
+        
+        function onYesTouch(e) {
+            e.preventDefault();
+            if(!phase1 || mediaActive) return;
+            
+            hint.innerText = `💖 ${getMsg(YES_HOVER, yesIdx++)}`;
+            addEffect('sparkle', yesBtn);
+            yesBtn.classList.add('heartbeat');
+            setTimeout(() => yesBtn.classList.remove('heartbeat'), 400);
+        }
+        
+        // ========== INIT ==========
+        function init() {
+            // Set positions
+            yesBtn.style.left = '15px';
+            yesBtn.style.top = '15px';
+            noBtn.style.right = '15px';
+            noBtn.style.top = '15px';
+            noBtn.style.left = 'auto';
+            
+            // Set text
+            noBtn.innerText = "💔 no";
+            escapeSpan.innerText = escapes;
+            hint.innerText = "hover or click no!";
+            
+            // Add listeners (both mouse and touch)
+            noBtn.addEventListener('mouseenter', onNoHover);
+            noBtn.addEventListener('click', onNoClick);
+            noBtn.addEventListener('touchstart', onNoTouch, { passive: false });
+            noBtn.addEventListener('touchend', (e) => e.preventDefault());
+            
+            yesBtn.addEventListener('mouseenter', onYesHover);
+            yesBtn.addEventListener('touchstart', onYesTouch, { passive: false });
+            yesBtn.addEventListener('touchend', (e) => e.preventDefault());
+            
+            // Prevent drag
+            yesBtn.ondragstart = noBtn.ondragstart = () => false;
+            
+            // Prevent zoom on double tap
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
+        }
+        
+        init();
+    </script>
+</body>
+</html>
